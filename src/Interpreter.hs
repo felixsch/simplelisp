@@ -12,31 +12,43 @@ import qualified Data.Map as M
 import Types
 import Parser
 
-type LookupTable = M.Map String LispExp
+data Lookup = Lookup 
+    { _symbols :: M.Map String LispExp
+    , _func    :: M.Map String ([LispExp] -> Ctx LispExp) }
+    
+makeLenses ''Lookup
 
-data Enviroment = Enviroment
-  { _globals :: LookupTable
-  , _builtin :: LookupTable
-  , _ctx :: [LookupTable]
+data Env = Env
+  { _globals :: Lookup
+  , _builtin :: Lookup
+  , _ctx :: [Lookup]
   , _envbuf :: [String]
   }
 
-makeLenses ''Enviroment
+makeLenses ''Env
 
-type EnvError = ErrorT String IO
-type Env a = StateT Enviroment EnvError a
+type CtxError = ErrorT String IO
+data Ctx a = StateT Env CtxError a
 
 findSymbol :: String -> Env LispExp
 findSymbol sym = do
         env <- get
         let all = env^.globals : (reverse $ env^.ctx)
-        case find all (M.lookup sym $ env^.builtin) of
+        case find all Nothing of
             Just x -> return x
             Nothing -> throwError $ "Could not find symbol'" ++ sym ++ "'"
     where
         find [] _ = Nothing
         find _ (Just x) = Just x
         find (x:xs) Nothing = find xs (M.lookup sym x)
+
+
+evaluate :: LispExp -> Env LispExp
+evaluate (LSymbol sym) = findSymbol sym
+evaluate (LList (x:xs)) = do
+    func <- evaluate x
+    apply func xs
+
 
 
 {-
@@ -63,7 +75,7 @@ findSymbol sym = do
 (+ 3 4)
 (defun (x y) (* x y))
 #t
--}
+j
 
 concat_ :: [LispExp] -> Env LispExp
 concat_ = foldM cons (LString "")
@@ -77,10 +89,7 @@ concat_ = foldM cons (LString "")
 builtinTable :: M.Map String ([LispExp] -> Env LispExp)
 builtinTable = M.fromList [ ("concat", concat_)]
 
-
-evaluate :: LispExp -> Env LispExp
-evaluate (LSymbol s) = findSymbol s
-evaluate exp         = return exp
+-}
 
 
 
