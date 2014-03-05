@@ -16,7 +16,6 @@ data Lookup = Lookup
     { _symbols :: M.Map String LispExp
     , _func    :: M.Map String ([LispExp] -> Ctx LispExp) }
     
-makeLenses ''Lookup
 
 data Env = Env
   { _globals :: Lookup
@@ -25,15 +24,17 @@ data Env = Env
   , _envbuf :: [String]
   }
 
+type CtxError = ErrorT String IO
+type Ctx a = StateT Env CtxError a
+
+makeLenses ''Lookup
 makeLenses ''Env
 
-type CtxError = ErrorT String IO
-data Ctx a = StateT Env CtxError a
 
-findSymbol :: String -> Env LispExp
+findSymbol :: String -> Ctx LispExp
 findSymbol sym = do
         env <- get
-        let all = env^.globals : (reverse $ env^.ctx)
+        let all = env^.globals.symbols : (reverse $ env^.ctx.symbols) -- : (reverse $ env^.ctx)
         case find all Nothing of
             Just x -> return x
             Nothing -> throwError $ "Could not find symbol'" ++ sym ++ "'"
@@ -43,11 +44,8 @@ findSymbol sym = do
         find (x:xs) Nothing = find xs (M.lookup sym x)
 
 
-evaluate :: LispExp -> Env LispExp
+evaluate :: LispExp -> Ctx LispExp
 evaluate (LSymbol sym) = findSymbol sym
-evaluate (LList (x:xs)) = do
-    func <- evaluate x
-    apply func xs
 
 
 
