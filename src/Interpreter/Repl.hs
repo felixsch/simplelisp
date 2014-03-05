@@ -2,18 +2,11 @@ module Interpreter.Repl where
 
 import System.IO
 import Control.Applicative
+import Control.Monad.IO.Class
 
-data Key = KeyUp
-         | KeyDown
-         | KeyRight
-         | KeyLeft
-         | KeyPos1
-         | KeyEnd
-         | KeyBack
-         | KeyDel
-         | KeyEnter
-         | KeyUnknown
-data Input = Normal String | Special Key
+import Interpreter.Types
+
+
 
 keycodes :: [(String, Key)]
 keycodes = [ ("[D", KeyLeft)
@@ -48,8 +41,15 @@ parseInput ('\b':[])    = Special KeyBack
 parseInput x            = Normal x
 
 
-getInput :: IO Input
-getInput = parseInput <$> getChars
+getInput :: Repl Input
+getInput = liftIO $ parseInput <$> getChars
+
+
+repl :: Repl ()
+repl env = undefined
+
+
+
 
 
 
