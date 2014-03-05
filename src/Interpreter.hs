@@ -34,7 +34,7 @@ makeLenses ''Env
 findSymbol :: String -> Ctx LispExp
 findSymbol sym = do
         env <- get
-        let all = env^.globals.symbols : (reverse $ env^.ctx.symbols) -- : (reverse $ env^.ctx)
+        let all = env^.globals.symbols : (reverse $ env^..ctx.traversed.symbols) -- : (reverse $ env^.ctx)
         case find all Nothing of
             Just x -> return x
             Nothing -> throwError $ "Could not find symbol'" ++ sym ++ "'"
