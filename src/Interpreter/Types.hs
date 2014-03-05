@@ -32,9 +32,12 @@ data Key = KeyUp
          | KeyBack
          | KeyDel
          | KeyEnter
+         | KeyTab
          | KeyUnknown
+         deriving (Show)
 
 data Input = Normal String | Special Key
+    deriving (Show)
 
 data ReplEnv = ReplEnv
     { _env :: Env

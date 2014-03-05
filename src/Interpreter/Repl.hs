@@ -1,6 +1,9 @@
 module Interpreter.Repl where
 
 import System.IO
+import System.Console.ANSI
+import System.Posix.Terminal
+import System.Posix.IO
 import Control.Applicative
 import Control.Monad.IO.Class
 
@@ -14,6 +17,8 @@ keycodes = [ ("[D", KeyLeft)
     , ("[A", KeyUp)
     , ("[B", KeyDown)
     , ("[7", KeyPos1)
+    , ("OH", KeyPos1)
+    , ("OF", KeyEnd)
     , ("[8", KeyEnd)
     , ("[3", KeyDel)
     -- xterm:
@@ -25,28 +30,75 @@ keycodes = [ ("[D", KeyLeft)
 
 
 
+
 getChars :: IO String
-getChars = loop stdin (return []) =<< hReady stdin
+getChars = do
+    x <- getChar
+    loop [x]
     where
-        loop h xs True = loop h (liftA2 (:) (hGetChar h) xs) =<< hReady h
-        loop h xs False = reverse <$> xs
+        loop xs = do
+            r <- hReady stdin
+            case r of 
+              False -> return $ reverse xs
+              True -> do
+                    x <- getChar
+                    loop (x:xs)
 
 
 parseInput :: String -> Input
 parseInput ('\ESC':xs) = Special $ case lookup xs keycodes of
                             Just x -> x
                             Nothing -> KeyUnknown
+parseInput ('\DEL':[])  = Special KeyBack
 parseInput ('\n':[])    = Special KeyEnter
-parseInput ('\b':[])    = Special KeyBack
+parseInput ('\t':[])    = Special KeyTab
+parseInput ('\EOT':[])  = Normal "\EOT"
 parseInput x            = Normal x
 
 
-getInput :: Repl Input
-getInput = liftIO $ parseInput <$> getChars
+getInput :: IO Input
+getInput = parseInput <$> getChars
 
 
-repl :: Repl ()
-repl env = undefined
+getInputLine :: String -> IO String
+getInputLine pre = (putStr pre) *> (handle [] =<< getInput)
+    where
+
+        handle xs (Normal "\EOT") = putStr "\n" *> return "\EOT"
+        handle xs (Normal x) = putStr x *> get (x ++ xs)
+
+        handle xs (Special KeyEnter) = putStr "\n" *> (return $ reverse xs)
+        handle xs (Special KeyBack) = delChar xs
+
+
+        handle xs x = get xs 
+
+        get x = handle x =<< getInput
+
+        delChar [] = get []
+        delChar xs = termDelChar >> get (tail xs)
+
+
+termDelChar :: IO ()
+termDelChar = cursorBackward 1 >> clearFromCursorToLineEnd
+
+
+
+repl :: IO ()
+repl = do
+    attrs <- getTerminalAttributes stdOutput
+    setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
+
+    loop =<< getInputLine ">>"
+
+    setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
+    where
+        loop ":q" = return ()
+        loop "\EOT" = return ()
+        loop x    = (putStrLn $ "-> " ++ x) *> (loop =<< getInputLine ">>")
+
+
+
 
 
 
