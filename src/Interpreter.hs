@@ -12,10 +12,9 @@ import qualified Data.Map as M
 import Types
 import Parser
 
-data Lookup = Lookup 
+data Lookup = Lookup
     { _symbols :: M.Map String LispExp
     , _func    :: M.Map String ([LispExp] -> Ctx LispExp) }
-    
 
 data Env = Env
   { _globals :: Lookup
