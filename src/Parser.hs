@@ -1,7 +1,8 @@
 module Parser where
 
 
-import Text.ParserCombinators.Parsec
+import Text.Parsec
+import Text.Parsec.String
 import Control.Applicative hiding ((<|>), many)
 
 
@@ -14,8 +15,6 @@ ignore = many (wspaces <|> comments) *> pure ()
   where
     wspaces = many $ oneOf " \n"
     comments = char ';' <:> many anyChar
-    
-
 
 -- see: https://www.fpcomplete.com/school/to-infinity-and-beyond/pick-of-the-week/parsing-floats-with-parsec
 pInt :: Parser LispExp
@@ -48,5 +47,8 @@ pExp =   pInt
      <|> pString
      <|> pSymbol
      <|> pList
+
+parseLisp :: String -> Either ParseError LispExp
+parseLisp = parse pExp "" 
 
 

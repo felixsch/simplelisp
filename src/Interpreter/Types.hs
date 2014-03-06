@@ -8,15 +8,16 @@ import Control.Monad.Error
 import Types
 
 
+type Function = ([LispExp] -> Ctx LispExp)
+
 data Lookup = Lookup
     { _symbols :: M.Map String LispExp
-    , _func    :: M.Map String ([LispExp] -> Ctx LispExp) }
+    , _func    :: M.Map String Function }
 
 data Env = Env
   { _globals :: Lookup
-  , _builtin :: Lookup
   , _ctx :: [Lookup]
-  , _envbuf :: [String]
+  , _history :: [String]
   }
 
 type CtxError = ErrorT String IO
@@ -38,15 +39,6 @@ data Key = KeyUp
 
 data Input = Normal String | Special Key
     deriving (Show)
-
-data ReplEnv = ReplEnv
-    { _env :: Env
-    , _history :: [String] }
-
-type Repl a = StateT Env IO a
-
-
-
+    
 makeLenses ''Lookup
 makeLenses ''Env
-makeLenses ''ReplEnv

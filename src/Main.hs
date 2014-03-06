@@ -3,7 +3,7 @@ module Main where
 import System.IO
 
 
-import Interpreter
+import Interpreter.Repl
 
 main :: IO ()
-main = putStrLn "moep"
+main = repl
