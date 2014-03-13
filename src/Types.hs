@@ -1,9 +1,7 @@
-module Types where
-
-import Control.Applicative
-import Control.Monad.State
-import Control.Monad.Error
-
+module Types
+    ( LispExp(..)
+    , showType )
+    where
 
 data LispExp = LInt Integer
              | LBool Bool

@@ -1,5 +1,18 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Interpreter.Types where
+module Interpreter.Types
+    ( Function
+    , Lookup(..)
+    , Env(..)
+    , CtxError
+    , Ctx
+    , Key(..)
+    , Input(..)
+    , symbols
+    , func
+    , globals
+    , ctx
+    , history)
+    where
 
 import Control.Lens
 import qualified Data.Map as M

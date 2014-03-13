@@ -1,4 +1,4 @@
-module Parser where
+module Parser (parseLisp) where
 
 
 import Text.Parsec
@@ -8,47 +8,51 @@ import Control.Applicative hiding ((<|>), many)
 
 import Types
 
+(<:>) :: Applicative f => f a -> f [a] -> f [a]
 (<:>) a b = (:) <$> a <*> b
 
-ignore :: Parser ()
-ignore = many (wspaces <|> comments) *> pure ()
-  where
-    wspaces = many $ oneOf " \n"
-    comments = char ';' <:> many anyChar
+wspaces :: Parser String
+wspaces = many $ oneOf " \n"
+
+comments :: Parser String
+comments = char ';' <:> many anyChar
 
 -- see: https://www.fpcomplete.com/school/to-infinity-and-beyond/pick-of-the-week/parsing-floats-with-parsec
 pInt :: Parser LispExp
 pInt = LInt <$> (read' <$> (plus <|> minus <|> number))
      where
          read' = read :: String -> Integer
-         plus  = char '+' *> number
-         minus = char '-' <:> number
+         plus  = try $ char '+' *> number
+         minus = try $ char '-' <:> number
          number = many1 digit
 
 pString :: Parser LispExp
-pString = LString <$> (char '"' *> many anyChar <* char '"')
+pString = fmap LString $ (char '"' *> many (noneOf "\"") <* char '"')
 
 pBool :: Parser LispExp
 pBool = LBool <$> choice [ string "#t" *> return True,
                            string "#f" *> return False ]
 
 pSymbol :: Parser LispExp
-pSymbol = LSymbol <$> (special <|> symbol)
+pSymbol = LSymbol <$> (liftA2 (:) (letter <|> symbol) $ many (letter <|> symbol <|> digit))
     where
-        special = char '*' <:> symbol
-        symbol  = many1 $ letter <|> digit
+        symbol  = oneOf "-+=!|&/*<>"
 
 pList :: Parser LispExp
-pList = LList <$> (ignore *> char '(' *> many pExp <* char ')' <* ignore)
+pList = LList <$> (ignore *> char '(' *> many expr <* char ')' <* ignore)
+    where
+        ignore = wspaces <|> comments
+        expr   = wspaces *> pExp
 
 
 pExp :: Parser LispExp
 pExp =   pInt
+     <|> pBool
      <|> pString
      <|> pSymbol
      <|> pList
 
-parseLisp :: String -> Either ParseError LispExp
-parseLisp = parse pExp "" 
+parseLisp :: String -> Either ParseError [LispExp]
+parseLisp = parse (many pExp) "" 
 
 

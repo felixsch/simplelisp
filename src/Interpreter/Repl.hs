@@ -5,8 +5,7 @@ import System.Console.ANSI
 import System.Posix.Terminal
 import System.Posix.IO
 import Control.Applicative
-import Control.Monad.IO.Class
-
+import Data.Maybe (fromMaybe)
 import Interpreter.Types
 
 
@@ -44,11 +43,8 @@ getChars = do
                     x <- getChar
                     loop (x:xs)
 
-
 parseInput :: String -> Input
-parseInput ('\ESC':xs) = Special $ case lookup xs keycodes of
-                            Just x -> x
-                            Nothing -> KeyUnknown
+parseInput ('\ESC':xs)  = Special $ fromMaybe KeyUnknown (lookup xs keycodes)
 parseInput ('\DEL':[])  = Special KeyBack
 parseInput ('\n':[])    = Special KeyEnter
 parseInput ('\t':[])    = Special KeyTab
@@ -61,17 +57,17 @@ getInput = parseInput <$> getChars
 
 
 getInputLine :: String -> IO String
-getInputLine pre = (putStr pre) *> (handle [] =<< getInput)
+getInputLine pre = putStr pre *> (handle [] =<< getInput)
     where
 
-        handle xs (Normal "\EOT") = putStr "\n" *> return "\EOT"
+        handle _ (Normal "\EOT") = putStr "\n" *> return "\EOT"
         handle xs (Normal x) = putStr x *> get (x ++ xs)
 
-        handle xs (Special KeyEnter) = putStr "\n" *> (return $ reverse xs)
+        handle xs (Special KeyEnter) = putStr "\n" *> return (reverse xs)
         handle xs (Special KeyBack) = delChar xs
 
 
-        handle xs x = get xs 
+        handle xs _ = get xs 
 
         get x = handle x =<< getInput
 
