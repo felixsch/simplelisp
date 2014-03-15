@@ -1,10 +1,13 @@
-module Interpreter.Eval where
+module Interpreter.Eval
+    ( findSymbol
+    , findFunction
+    , evaluate )
+    where
 
 import Control.Lens
 
 import Control.Monad.State
 import Control.Monad.Error
-
 
 import qualified Data.Map as M
 
@@ -12,8 +15,9 @@ import Types
 import Interpreter.Types
 
 find :: (Ord k) => k -> [M.Map k a] -> Maybe a -> Maybe a
-find _ [] _ = Nothing
+
 find _ _ (Just x) = Just x
+find _ [] _ = Nothing
 find s (x:xs) Nothing = find s xs (M.lookup s x)
 
 
@@ -21,6 +25,7 @@ findSymbol :: String -> Ctx LispExp
 findSymbol sym = do
     env <- get
     let tables = env^.globals.symbols : reverse (env^..ctx.traversed.symbols) -- : (reverse $ env^.ctx)
+
     case find sym tables Nothing of
         Just x -> return x
         Nothing -> throwError $ "Could not find symbol '" ++ sym ++ "'"

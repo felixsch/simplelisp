@@ -3,7 +3,7 @@ module Main where
 import System.IO
 
 
-import Interpreter.Repl
+import Interpreter
 
 main :: IO ()
-main = repl
+main = interpreter

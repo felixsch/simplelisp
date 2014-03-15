@@ -1,9 +1,10 @@
-module Interpreter.Repl where
+module Interpreter.Repl
+    (getInputLine)
+    where
+
 
 import System.IO
 import System.Console.ANSI
-import System.Posix.Terminal
-import System.Posix.IO
 import Control.Applicative
 import Data.Maybe (fromMaybe)
 import Interpreter.Types
@@ -77,22 +78,6 @@ getInputLine pre = putStr pre *> (handle [] =<< getInput)
 
 termDelChar :: IO ()
 termDelChar = cursorBackward 1 >> clearFromCursorToLineEnd
-
-
-
-repl :: IO ()
-repl = do
-    attrs <- getTerminalAttributes stdOutput
-    setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
-
-    loop =<< getInputLine ">>"
-
-    setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
-    where
-        loop ":q" = return ()
-        loop "\EOT" = return ()
-        loop x    = (putStrLn $ "-> " ++ x) *> (loop =<< getInputLine ">>")
-
 
 
 
