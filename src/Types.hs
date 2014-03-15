@@ -10,7 +10,15 @@ data LispExp = LInt Integer
              | LSymbol String
              | LFunction String
              | LBind String
-             deriving (Show, Eq)
+             deriving (Eq)
+
+instance Show LispExp where
+    show (LInt x) = show x
+    show (LBool True) = "#t"
+    show (LBool False) = "#f"
+    show (LList x) = "(" ++ (unwords $ map show x) ++ ")"
+    show (LString x) = show x
+    show _ = ""
 
 
 

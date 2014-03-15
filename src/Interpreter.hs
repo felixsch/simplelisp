@@ -36,10 +36,9 @@ interpreter = do
     attrs <- getTerminalAttributes stdOutput
     setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
 
-    putStrLn ""
-    putStrLn "--simple lisp interpreter--"
     putStrLn "type :q to quit"
-    loop newEnv =<< getInputLine ">>"
+
+    loop newEnv =<< getInputLine ">> "
 
     setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
 
@@ -53,7 +52,7 @@ interpreter = do
                 Left err   -> putStrLn $ "Parse Error: " ++ show err
                 Right expr -> do
                     xx <- (foldM evalator e expr)
-                    next <- getInputLine ">>"
+                    next <- getInputLine ">> "
                     loop xx next
 
 evalator :: Env -> LispExp -> IO Env
