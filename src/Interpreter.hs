@@ -21,9 +21,6 @@ import Parser
 builtins :: Lookup
 builtins = Lookup builtinSymbols builtinFunctions
 
-newLookup :: Lookup
-newLookup = Lookup M.empty M.empty
-
 
 newEnv :: Env
 newEnv = Env builtins [] []
@@ -38,22 +35,22 @@ interpreter = do
 
     putStrLn "type :q to quit"
 
-    loop newEnv =<< getInputLine ">> "
+    loop newEnv [] =<< getInputLine ">> " []
 
     setTerminalAttributes stdOutput (withoutMode attrs EnableEcho) Immediately
 
     hSetBuffering stdout LineBuffering
     hSetBuffering stdin  LineBuffering
     where
-        loop _":q"    = return ()
-        loop _ "\EOT" = return ()
-        loop e  x     = do
+        loop _ _ ":q"   = return ()
+        loop _ _ "\EOT" = return ()
+        loop e b x      = do
             case parseLisp x of
                 Left err   -> putStrLn $ "Parse Error: " ++ show err
                 Right expr -> do
                     xx <- (foldM evalator e expr)
-                    next <- getInputLine ">> "
-                    loop xx next
+                    next <- getInputLine ">> " b
+                    loop xx (next:b) next
 
 evalator :: Env -> LispExp -> IO Env
 evalator env expr = do

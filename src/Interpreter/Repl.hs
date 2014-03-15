@@ -57,23 +57,30 @@ getInput :: IO Input
 getInput = parseInput <$> getChars
 
 
-getInputLine :: String -> IO String
-getInputLine pre = putStr pre *> (handle [] =<< getInput)
+getInputLine :: String -> [String] -> IO String
+getInputLine pre buffer = putStr pre *> (handle [] 0 =<< getInput)
     where
 
-        handle _ (Normal "\EOT") = putStr "\n" *> return "\EOT"
-        handle xs (Normal x) = putStr x *> get (x ++ xs)
+        handle _  _ (Normal "\EOT") = putStr "\n" *> return "\EOT"
+        handle xs bufpos (Normal x) = putStr x *> get (x ++ xs) bufpos
 
-        handle xs (Special KeyEnter) = putStr "\n" *> return (reverse xs)
-        handle xs (Special KeyBack) = delChar xs
+        handle xs _ (Special KeyEnter) = putStr "\n" *> return (reverse xs)
+        handle xs bufpos (Special KeyBack) = delChar xs bufpos
+
+        handle _ bufpos (Special KeyUp)   = replaceLine pre (buffer !! bufpos) *> get (buffer !! bufpos) (bufpos + 1)
+        handle _ bufpos (Special KeyDown) = replaceLine pre (buffer !! (bufpos - 1)) *> get (buffer !! (bufpos - 1)) (bufpos - 1)
 
 
-        handle xs _ = get xs 
+        handle xs bufpos _ = get xs bufpos 
 
-        get x = handle x =<< getInput
+        get x bufpos = handle x bufpos =<< getInput
 
-        delChar [] = get []
-        delChar xs = termDelChar >> get (tail xs)
+        delChar [] bufpos = get [] bufpos
+        delChar xs bufpos = termDelChar >> get (tail xs) bufpos
+
+
+replaceLine :: String -> String -> IO ()
+replaceLine pre re = clearLine *> cursorBackward 255 *>  (putStr $ pre ++ re)
 
 
 termDelChar :: IO ()
