@@ -10,6 +10,7 @@ data LispExp = LInt Integer
              | LSymbol String
              | LFunction String
              | LBind String
+             | LNil
              deriving (Eq)
 
 instance Show LispExp where
@@ -17,7 +18,7 @@ instance Show LispExp where
     show (LBool True) = "#t"
     show (LBool False) = "#f"
     show (LList x) = "(" ++ (unwords $ map show x) ++ ")"
-    show (LString x) = show x
+    show (LString x) = x
     show _ = ""
 
 
@@ -29,5 +30,6 @@ showType (LString _)   = "String"
 showType (LList _)     = "List"
 showType (LSymbol _)   = "Symbol"
 showType (LFunction _) = "Function"
+showType (LNil)        = "Nil"
 showType (LBind _)     = "SpecialFunction"
 

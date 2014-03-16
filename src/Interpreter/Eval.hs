@@ -48,8 +48,10 @@ evalList :: [LispExp] -> LispExp -> Ctx LispExp
 evalList a (LFunction f) = do
     func' <- findFunction f
     args <- mapM evaluate a
+    liftIO $ putStrLn $ "function calling: " ++ f
     func' args
 evalList a (LBind f)     = do
     func' <- findFunction f
+    liftIO $ putStrLn $ "bind calling: " ++ f
     func' a
-evalList _ x = throwError $ showType x ++ " is not a list."
+evalList _ x = throwError $ showType x ++ " is not a expression."

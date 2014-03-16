@@ -10,7 +10,6 @@ import Data.Maybe (fromMaybe)
 import Interpreter.Types
 
 
-
 keycodes :: [(String, Key)]
 keycodes = [ ("[D", KeyLeft)
     , ("[C", KeyRight)
@@ -58,7 +57,7 @@ getInput = parseInput <$> getChars
 
 
 getInputLine :: String -> [String] -> IO String
-getInputLine pre buffer = putStr pre *> (handle [] 0 =<< getInput)
+getInputLine pre buf = putStr pre *> (handle [] 0 =<< getInput)
     where
 
         handle _  _ (Normal "\EOT") = putStr "\n" *> return "\EOT"
@@ -67,8 +66,12 @@ getInputLine pre buffer = putStr pre *> (handle [] 0 =<< getInput)
         handle xs _ (Special KeyEnter) = putStr "\n" *> return (reverse xs)
         handle xs bufpos (Special KeyBack) = delChar xs bufpos
 
-        handle _ bufpos (Special KeyUp)   = replaceLine pre (buffer !! bufpos) *> get (buffer !! bufpos) (bufpos + 1)
-        handle _ bufpos (Special KeyDown) = replaceLine pre (buffer !! (bufpos - 1)) *> get (buffer !! (bufpos - 1)) (bufpos - 1)
+        handle x bufpos (Special KeyUp)
+            | bufpos +1  ==  buflen = get x bufpos
+            | otherwise             = replaceLine pre (buffer !! (bufpos +1)) *> get (buffer !! (bufpos + 1)) (bufpos + 1)
+        handle x bufpos (Special KeyDown)
+            | bufpos == 0           = get x bufpos
+            | otherwise             = replaceLine pre (buffer !! (bufpos -1)) *> get (buffer !! (bufpos - 1)) (bufpos - 1)
 
 
         handle xs bufpos _ = get xs bufpos 
@@ -77,6 +80,9 @@ getInputLine pre buffer = putStr pre *> (handle [] 0 =<< getInput)
 
         delChar [] bufpos = get [] bufpos
         delChar xs bufpos = termDelChar >> get (tail xs) bufpos
+
+        buflen = length buffer
+        buffer = "" : buf
 
 
 replaceLine :: String -> String -> IO ()

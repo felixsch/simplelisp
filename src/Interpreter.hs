@@ -46,7 +46,9 @@ interpreter = do
         loop _ _ "\EOT" = return ()
         loop e b x      = do
             case parseLisp x of
-                Left err   -> putStrLn $ "Parse Error: " ++ show err
+                Left err   -> do
+                    putStrLn $ "Parse Error: " ++ show err
+                    loop e b =<< getInputLine ">> " b
                 Right expr -> do
                     xx <- (foldM evalator e expr)
                     next <- getInputLine ">> " b
@@ -57,4 +59,14 @@ evalator env expr = do
                 e <- runErrorT $ runStateT (evaluate expr) env
                 case e of
                     Left err -> return env <* (putStrLn $ "Eval Error: " ++ err)
-                    Right (x, ne) -> return ne <*  (putStrLn $ show x)
+                    Right (x, ne) -> return ne <* printValue x
+
+printValue :: LispExp -> IO ()
+printValue LNil = return ()
+printValue x    = putStrLn $ show x
+
+
+
+
+
+
