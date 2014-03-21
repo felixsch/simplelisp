@@ -14,6 +14,8 @@ import qualified Data.Map as M
 import Types
 import Interpreter.Types
 
+
+
 find :: (Ord k) => k -> [M.Map k a] -> Maybe a -> Maybe a
 
 find _ _ (Just x) = Just x
@@ -24,8 +26,7 @@ find s (x:xs) Nothing = find s xs (M.lookup s x)
 findSymbol :: String -> Ctx LispExp
 findSymbol sym = do
     env <- get
-    let tables = env^.globals.symbols : reverse (env^..ctx.traversed.symbols) -- : (reverse $ env^.ctx)
-
+    let tables = (env ^.. ctx . traversed . symbols) ++ [env ^. globals . symbols]
     case find sym tables Nothing of
         Just x -> return x
         Nothing -> throwError $ "Could not find symbol '" ++ sym ++ "'"
@@ -33,7 +34,7 @@ findSymbol sym = do
 findFunction :: String -> Ctx Function
 findFunction sym = do
     env <- get
-    let tables = env^.globals.func : reverse (env^..ctx.traversed.func)
+    let tables = (env ^.. ctx . traversed . func) ++ [env ^. globals . func]
     case find sym tables Nothing of
         Just x -> return x
         Nothing -> throwError $ "Could not find function '" ++ sym ++ "'"

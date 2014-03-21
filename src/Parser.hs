@@ -33,6 +33,12 @@ pBool :: Parser LispExp
 pBool = LBool <$> choice [ string "#t" *> return True,
                            string "#f" *> return False ]
 
+pQuoted :: Parser LispExp
+pQuoted = do
+    char '\''
+    x <- pExp
+    return $ LList [LSymbol "quote", x]
+
 pSymbol :: Parser LispExp
 pSymbol = LSymbol <$> (liftA2 (:) (letter <|> symbol) $ many (letter <|> symbol <|> digit))
     where
@@ -50,6 +56,7 @@ pExp =   pInt
      <|> pBool
      <|> pString
      <|> pSymbol
+     <|> pQuoted
      <|> pList
 
 parseLisp :: String -> Either ParseError [LispExp]

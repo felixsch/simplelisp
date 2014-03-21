@@ -4,9 +4,10 @@ module Interpreter.Builtin
     where
 
 import qualified Data.Map as M
-
+import Control.Lens
 import Control.Applicative
 import Control.Monad.Error
+import Control.Monad.State
 import Interpreter.Types
 import Interpreter.Eval
 import Types
@@ -20,7 +21,9 @@ builtinSymbols = M.fromList
     , ("+", LFunction "add")
     , ("list", LFunction "list")
     , ("print", LFunction "print")
-    , ("if", LBind "if") ]
+    , ("if", LBind "if")
+    , ("quote", LBind "quote")
+    , ("setq", LBind "setq")]
 
 
 builtinFunctions :: M.Map String Function
@@ -29,8 +32,25 @@ builtinFunctions = M.fromList
     , ("add", simpleMathOp (+))
     , ("print", lispPrint)
     , ("list", return . LList)
-    , ("if", lispIf) ]
+    , ("if", lispIf)
+    , ("quote", lispQuote)
+    , ("setq", lispSetQ)]
 
+lispQuote :: [LispExp] -> Ctx LispExp
+lispQuote (x:[]) = return x
+lispQuote _      = throwError "quote is applied to too much arguments"
+
+
+lispSetQ :: [LispExp] -> Ctx LispExp
+lispSetQ (name:value:[]) = do
+    n <- eName name
+    globals . symbols %= M.insert n value
+    return value
+    where
+        eName (LSymbol x) = return x
+        eName x           = throwError $ "setq first argument needs to be a symbol but " ++ showType x ++ " found"
+lispSetQ x               = throwError $ "setq needs 2 arguments but " ++ (show $ length x) ++ " found."
+    
 
 
 simpleMathOp :: (Integer -> Integer -> Integer) -> [LispExp] -> Ctx LispExp
@@ -60,8 +80,6 @@ lispIf args@(sw:a:b:xs)
         select (LInt x)    = return $ x > 0
         select (LBool x)   = return x
         select x           = throwError $ "Invalid type in first arguement of if expression: boolean regquired but " ++ showType x ++ " found"
-
-lispIf x = 
 
 
                                         

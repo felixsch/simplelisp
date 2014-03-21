@@ -27,11 +27,15 @@ data Lookup = Lookup
     { _symbols :: M.Map String LispExp
     , _func    :: M.Map String Function }
 
+instance Show Lookup where
+    show (Lookup sym _) = show sym
+
 data Env = Env
   { _globals :: Lookup
   , _ctx :: [Lookup]
   , _history :: [String]
   }
+  deriving (Show)
 
 type CtxError = ErrorT String IO
 type Ctx a = StateT Env CtxError a
